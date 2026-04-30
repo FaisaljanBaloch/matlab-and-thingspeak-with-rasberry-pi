@@ -50,14 +50,14 @@ This will execute the Python script in the background on every startup.
 
 ## Acknowledgement
 I would like to express my heartfelt gratitude to my colleagues for their invaluable support and collaboration throughout this project. Your insights and efforts have been instrumental in its success.
-- @shahjehan67 and Zubair Ahmed
-- @slemankfa and the team for sharing initial guides which really helped us implementing our workflow.
+* [Shah Jehan](https://github.com/shahjehan67) and [Zubair Ahmed](https://github.com/zoobi1821) for their continuous efforts and dedication.
+* [@slemankfa](https://github.com/slemankfa) and the team for sharing initial guides which really helped us implementing our workflow.
 
 ## Contribution
 We welcome your contributions to this project! If you have any ideas, modifications, or advancements to suggest, we are eager to learn from you. Feel free to fork the repository, make changes, and submit a pull request. Your input is highly appreciated.
 
 ## Thank You
-A special thank you to our professors (@MarcoRianiUNIPR and @Asadunipr) as their book's chapter on "Data Collection from Mobile Sensors" acted like a roadmap for implementing this.
+A special thank you to our professors [@MarcoRianiUNIPR](https://github.com/MarcoRianiUNIPR) and [@Asadunipr](https://github.com/Asadunipr) as their book's chapter on "Data Collection from Mobile Sensors" acted like a roadmap for implementing this.
 
 ## Contact
 You can reach out to us if you need any help in the integration.
