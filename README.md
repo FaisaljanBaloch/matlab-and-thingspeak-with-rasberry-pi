@@ -51,6 +51,11 @@ To have the script start automatically every time your Raspberry Pi boots up, yo
     ```
 This will execute the Python script in the background on every startup.
 
+## Important Notes
+* ThingSpeak free version allows data update every 15 seconds
+* Faster requests may be rejected
+* Internet connection is required
+
 ## Acknowledgement
 I would like to express my heartfelt gratitude to my colleagues for their invaluable support and collaboration throughout this project. Your insights and efforts have been instrumental in its success.
 * [Shah Jehan](https://github.com/shahjehan67) and [Zubair Ahmed](https://github.com/zoobi1821) for their continuous efforts and dedication.
