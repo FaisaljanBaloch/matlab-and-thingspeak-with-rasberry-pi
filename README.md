@@ -3,7 +3,7 @@
 A starter guide to collect data from the SDS011 sensor with Raspberry Pi and store it in the ThingSpeak cloud platform, to visualize and analyze air quality data using MATLAB.
 
 ## Workflow Diagram
-![Workflow Diagram](workflow_diagram.png)
+![Workflow Diagram](images/workflow_diagram.png)
 
 ## Pre-requisites
 To run this project on a Raspberry Pi device, ensure the following Python packages are installed:
@@ -27,6 +27,9 @@ pip install sds011lib requests
 3.  **Get Your Write API Key:**
     *   Go to the **API Keys** tab for your channel.
     *   Copy the **Write API Key**. You will need this for the `air_quality.py` script.
+
+### ThingSpeak Channel Analytics
+![Thingspeak channel analytics](images/thingspeak_channel_stats.png)
 
 ## Running the Script
 ### Running in the background
