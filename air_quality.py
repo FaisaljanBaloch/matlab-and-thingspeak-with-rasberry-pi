@@ -6,7 +6,7 @@ import requests
 # CONFIG
 WRITE_API_KEY = "YOUR_WRITE_API_KEY_HERE"
 THINGSPEAK_URL = "https://api.thingspeak.com/update"
-INTERVAL = 60  # (ThingSpeak free tier: min 15s)
+INTERVAL = 15  # (ThingSpeak free tier: min 15s)
 
 def read_sds011():
 

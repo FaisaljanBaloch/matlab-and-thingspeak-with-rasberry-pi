@@ -32,24 +32,43 @@ pip install sds011lib requests
 ![Thingspeak channel analytics](images/thingspeak_channel_stats.png)
 
 ## Running the Script
-### Running in the background
-To run the Python script in the background, you can use the `nohup` command:
+### Run once (foreground)
 ```bash
-nohup python air_quality.py &
+python3 air_quality.py
 ```
-This will keep the script running even if you close the terminal. The output will be saved to a file named `nohup.out`.
 
-### Running on boot
-To have the script start automatically every time your Raspberry Pi boots up, you can use `crontab`:
-1.  Open the crontab editor:
+### Run as a systemd service (recommended)
+This is the most reliable way to run in the background and start on boot for Raspberry Pi OS.
+1.  Create a service file (update `User` and paths):
     ```bash
-    crontab -e
+    sudo tee /etc/systemd/system/air-quality.service > /dev/null << 'EOF'
+    [Unit]
+    Description=Air quality sensor to ThingSpeak
+    After=network-online.target
+    Wants=network-online.target
+
+    [Service]
+    Type=simple
+    User=pi
+    WorkingDirectory=/path/to/your
+    ExecStart=/usr/bin/python3 /path/to/your/air_quality.py
+    Restart=on-failure
+    RestartSec=10
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
     ```
-2.  Add the following line to the end of the file, making sure to replace `/path/to/your/` with the actual path to the script:
+2.  Enable and start the service:
     ```bash
-    @reboot python /path/to/your/air_quality.py &
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now air-quality.service
     ```
-This will execute the Python script in the background on every startup.
+3.  Check status and logs:
+    ```bash
+    sudo systemctl status air-quality.service
+    sudo journalctl -u air-quality.service -f
+    ```
 
 ## Important Notes
 * ThingSpeak free version allows data update every 15 seconds

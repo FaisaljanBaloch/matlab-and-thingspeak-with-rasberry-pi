@@ -2,99 +2,28 @@
 
 channelID = YOUR_CHANNEL_ID; % Channel ID (found on ThingSpeak)
 readAPIKey = 'CHANNEL_READ_API_KEY';
-nobs = 10; % number of observations
+nobs = 50; % number of observations
 
 % Read data from ThingSpeak channel
-% Field 1: PM 2.5, Field 2: PM 10 values 
-data = thingSpeakRead(channelID, 'Fields', [1, 2], 'NumPoints', nobs, 'ReadKey', readAPIKey);
+% Field 1: PM 2.5 values
+% Field 2: PM 10 values
+data = thingSpeakRead(channelID, 'Fields', [1, 2], 'NumPoints', nobs, 'ReadKey', readAPIKey, OutputFormat='timetable');
 
 disp(data)
 
-%%
-% Create a time vector (1 second between samples)
-t = 1:nobs;
+timestamps = data.Timestamps;
 
-% Extract the two signals
-signal1 = data(:,1);
-signal2 = data(:,2);
+% Extract the pm2.5 and pm10 data
+pm25 = data.pm25;
+pm10 = data.pm10;
 
-% Plot both signals
-figure;
-plot(t, signal1, '-o', 'LineWidth', 1.5); hold on;
-plot(t, signal2, '-s', 'LineWidth', 1.5);
-grid on;
+%% Exploring Air data using PM 2.5 and PM 10 measurements
 
-xlabel('Observation number');
-ylabel('Measured value');
-title('Collected Sensor Data');
-legend('Signal 1','Signal 2');
+figure('Name', 'Dust Measurements')
 
-%%
-figure;
-scatter(signal1, signal2, 60, 'filled');
-grid on;
-
-xlabel('Signal 1');
-ylabel('Signal 2');
-title('Signal 1 vs Signal 2');
-
-
-%%
-stats.mean1 = mean(signal1);
-stats.mean2 = mean(signal2);
-
-stats.std1 = std(signal1);
-stats.std2 = std(signal2);
-
-stats.min1 = min(signal1);
-stats.min2 = min(signal2);
-
-stats.max1 = max(signal1);
-stats.max2 = max(signal2);
-
-stats
-
-
-%%
-
-smooth1 = movmean(signal1, 3);
-smooth2 = movmean(signal2, 3);
-
-figure;
-plot(t, signal1, 'o--'); hold on;
-plot(t, smooth1, 'LineWidth', 2);
-plot(t, signal2, 's--');
-plot(t, smooth2, 'LineWidth', 2);
-grid on;
-
-legend('Signal 1 raw','Signal 1 smoothed','Signal 2 raw','Signal 2 smoothed');
-title('Smoothed vs Raw Data');
-
-
-%%
-
-corr_value = corrcoef(signal1, signal2);
-corr_value
-
-
-%%
-%1. Time‑series plot (PM2.5 & PM10 over time)
-%This is the most fundamental air‑quality visualization.
-
-%What it tells you:
-%Pollution trends
-
-%Spikes (cooking, traffic, dust)
-
-%Sensor stability
-
-t = 1:nobs;
-pm25 = data(:,1);
-pm10 = data(:,2);
-
-figure;
-plot(t, pm25, '-o', 'LineWidth', 1.5); hold on;
-plot(t, pm10, '-s', 'LineWidth', 1.5);
+plot(timestamps, pm25, '-o', 'LineWidth', 1.5); 
+hold on;
+plot(timestamps, pm10, '-s', 'LineWidth', 1.5);
 grid on;
 
 xlabel('Sample number');
@@ -102,73 +31,109 @@ ylabel('Concentration (µg/m³)');
 title('PM2.5 and PM10 over time');
 legend('PM2.5','PM10');
 
-
 %%
-%2. PM2.5 vs PM10 scatter plot
-%Shows the relationship between the two pollutants.
+% Smooth with centered moving average (window 3)
+smooth1 = movmean(pm25, 3);
+smooth2 = movmean(pm10, 3);
 
-%What it tells you:
-%Whether PM2.5 and PM10 rise together
+figure('Name', 'Smoothed Air Data');
 
-%Whether pollution is fine‑particle dominated (common indoors)
+plot(timestamps, pm25, 'o--'); hold on;
+plot(timestamps, smooth1, 'LineWidth', 2);
+plot(timestamps, pm10, 's--');
+plot(timestamps, smooth2, 'LineWidth', 2);
+grid on;
 
-%Whether dust dominates (common outdoors)
-figure;
+legend('PM2.5 raw','PM2.5 smoothed','PM10 raw','PM10 smoothed');
+title('Smoothed vs Raw Data');
+
+%% The relationship between the two pollutants. 
+
+corr_value = corrcoef(pm25, pm10);
+disp(corr_value) % correlation matrix
+
+% Let's see whether PM2.5 and PM10 rise together
+
+figure('Name', 'pm25 vs pm10');
+
 scatter(pm25, pm10, 60, 'filled');
 grid on;
 
-xlabel('PM2.5 (µg/m³)');
-ylabel('PM10 (µg/m³)');
-title('Correlation between PM2.5 and PM10');
+xlabel('PM 2.5');
+ylabel('PM 10');
+title('PM 2.5 vs PM 10');
 
+%% The Correlation between pm25 and pm10 values
+
+% fitting a simple regression model
+mdl = fitlm(pm25, pm10);
+
+figure('Name', 'Linear Regression');
+
+plot(mdl);
+
+% Get all line/scatter handles and increase their size
+ax = gca;
+allLines = findobj(ax, 'Type', 'Line');
+allScatter = findobj(ax, 'Type', 'Scatter');
+
+% Increase fitted line and confidence bound line widths
+for i = 1:length(allLines)
+    allLines(i).LineWidth = 2;
+end
+
+% Increase scatter marker size
+for i = 1:length(allScatter)
+    allScatter(i).SizeData = 40;  % default is ~36
+    allScatter(i).MarkerFaceAlpha = 0.7;
+end
+
+disp('Regression Results:');
+disp("R-squared: " + mdl.Rsquared.Ordinary)
+disp("Intercept: " + mdl.Coefficients.Estimate(1))
+disp("Slope: " + mdl.Coefficients.Estimate(2))
+
+
+xlabel('PM2.5 (ug/m3)');
+ylabel('PM10 (ug/m3)');
+title(sprintf('PM2.5 vs PM10 Regression (R²= %.3f)', ...
+    mdl.Rsquared.Ordinary));
+grid on;
 %%
-%Spike detection (pollution events)
-%Useful for identifying:
+% Spikes detection (pollution events)
+% Useful for identifying:
+% Cooking, Smoking, Opening windows and Traffic passing by anomalies.
 
-%Cooking
-
-%Smoking
-
-%Opening windows
-
-%Traffic passing by
-
-threshold25 = mean(pm25) + 2*std(pm25);
+mu = mean(pm25);
+threshold25 = mu + 2*std(pm25);
 spikes25 = pm25 > threshold25;
-disp(spikes25)
 
-%%
-%Histogram (distribution of pollution levels)
-%Shows how often certain pollution levels occur.
+fprintf('\nAnomalies detected: %d readings\n', sum(spikes25));
 
+figure('Name', 'Anomaly Detection');
 
-figure;
-subplot(1,2,1);
-histogram(pm25);
-title('PM2.5 distribution');
-xlabel('µg/m³');
+plot(timestamps, pm25, 'b-', 'LineWidth', 1); 
+hold on;
 
-subplot(1,2,2);
-histogram(pm10);
-title('PM10 distribution');
-xlabel('µg/m³');
+scatter(timestamps(spikes25), pm25(spikes25), ...
+    80, 'r', 'filled', 'DisplayName', 'Anomaly');
+yline(threshold25, 'r--', ...
+    sprintf('Threshold (%.1f)', threshold25), 'LineWidth', 1.5);
+yline(mu, 'g--', sprintf('Mean (%.1f)', mu), 'LineWidth', 1.2);
+xlabel('Time');
+ylabel('PM2.5 (ug/m3)');
 
+title('Parma PM2.5 — Anomaly Detection');
+legend('PM2.5', 'Anomalies', 'Location', 'northwest');
 
-%%
-%9. Compare your data to WHO limits
-%WHO guidelines:
-
-%PM2.5: 5 µg/m³ annual, 15 µg/m³ daily
-
-%PM10: 15 µg/m³ annual, 45 µg/m³ daily
-
-%I can generate a plot with WHO limits overlaid.
+grid on;
 
 
-% Extract signals
-pm25 = data(:,1);
-pm10 = data(:,2);
-t = 1:length(pm25);
+%% World Health Organization (WHO) Limits and guidelines
+
+% WHO Limits:
+% PM2.5: 5 µg/m³ annual, 15 µg/m³ daily
+% PM10: 15 µg/m³ annual, 45 µg/m³ daily
 
 % WHO limits
 WHO_PM25_annual = 5;
@@ -177,11 +142,11 @@ WHO_PM25_daily  = 15;
 WHO_PM10_annual = 15;
 WHO_PM10_daily  = 45;
 
-figure;
+figure('Name', 'WHO Limits')
 
 % --- PM2.5 subplot ---
 subplot(2,1,1);
-plot(t, pm25, '-o', 'LineWidth', 1.5); hold on;
+plot(timestamps, pm25, '-o', 'LineWidth', 1.5); hold on;
 yline(WHO_PM25_annual, 'g--', 'WHO PM2.5 Annual (5 µg/m³)', 'LineWidth', 1.2);
 yline(WHO_PM25_daily,  'r--', 'WHO PM2.5 Daily (15 µg/m³)',  'LineWidth', 1.2);
 grid on;
@@ -193,7 +158,7 @@ legend('Measured PM2.5');
 
 % --- PM10 subplot ---
 subplot(2,1,2);
-plot(t, pm10, '-s', 'LineWidth', 1.5); hold on;
+plot(timestamps, pm10, '-s', 'LineWidth', 1.5); hold on;
 yline(WHO_PM10_annual, 'g--', 'WHO PM10 Annual (15 µg/m³)', 'LineWidth', 1.2);
 yline(WHO_PM10_daily,  'r--', 'WHO PM10 Daily (45 µg/m³)',  'LineWidth', 1.2);
 grid on;
@@ -203,3 +168,37 @@ ylabel('PM10 (µg/m³)');
 title('PM10 vs WHO Air Quality Guidelines');
 legend('Measured PM10');
 
+%% ARIMA Forecasting for PM2.5
+
+% Define forecast horizon
+forecastSteps = 24;
+
+% Fit ARIMA model
+model = arima(2,1,2);
+fitModel = estimate(model, pm25);
+
+% Generate Forecast
+[forecastValues, forecastMSE] = forecast( ...
+    fitModel, ...
+    forecastSteps, ...
+    'Y0', pm25);
+
+% Confidence intervals
+upperBound = forecastValues + 1.96*sqrt(forecastMSE);
+lowerBound = forecastValues - 1.96*sqrt(forecastMSE);
+
+% Future time index
+futureIndex = length(pm25)+1 : length(pm25)+forecastSteps;
+
+% Plot forecast
+figure('Name', 'ARIMA Forecast');
+
+plot(pm25,'b', 'LineWidth',2)
+hold on
+plot(futureIndex, forecastValues,'r','LineWidth',2)
+plot(futureIndex, upperBound,'k--')
+plot(futureIndex, lowerBound,'k--')
+
+legend('Actual','Forecast','Upper','Lower')
+title('ARIMA Forecast')
+grid on
